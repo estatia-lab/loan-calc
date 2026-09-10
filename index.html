@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="借入可能額">
+<title>借入可能額 早見計算</title>
+<style>
+:root{
+  --navy:#1F4E79; --ink:#1c2430; --mute:#6b7480; --line:#d9dee6; --paper:#f6f7f9; --card:#ffffff; --accent:#FFC000; --accent-soft:#FFF2CC; --red:#C00000;
+  --sans:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-text-size-adjust:100%}
+body{padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px)}
+main{max-width:520px;margin:0 auto;padding:0 16px}
+header{padding:18px 0 10px}
+header h1{font-size:17px;font-weight:600;margin:0;letter-spacing:.02em}
+header p{margin:4px 0 0;font-size:12px;color:var(--mute)}
+
+.result{background:var(--navy);color:#fff;border-radius:14px;padding:18px 18px 14px;position:sticky;top:8px;z-index:2;box-shadow:0 6px 18px rgba(31,78,121,.25)}
+.result .label{font-size:13px;opacity:.85}
+.result .big{font-size:40px;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:2px}
+.result .big small{font-size:18px;font-weight:600;margin-left:4px}
+.result .sub{display:flex;gap:14px;margin-top:10px;font-size:12.5px;opacity:.92;flex-wrap:wrap}
+.result .sub b{font-variant-numeric:tabular-nums;font-weight:600}
+.result .warn{margin-top:10px;background:var(--accent);color:#3a2a00;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:600;display:none}
+
+.mode{display:flex;gap:6px;margin:14px 0 10px;background:#e9edf2;border-radius:10px;padding:4px}
+.mode button{flex:1;border:0;background:transparent;border-radius:8px;padding:9px 0;font-size:14px;font-family:inherit;color:var(--mute);font-weight:600}
+.mode button[aria-pressed="true"]{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 14px;margin-bottom:12px}
+.row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);gap:10px}
+.row:last-child{border-bottom:0}
+.row label{font-size:14px;color:var(--ink)}
+.row label span{display:block;font-size:11.5px;color:var(--mute);margin-top:2px}
+.field{display:flex;align-items:center;gap:6px}
+.field input{width:104px;font-size:18px;font-weight:600;text-align:right;border:1px solid var(--line);border-radius:8px;padding:7px 8px;font-family:inherit;font-variant-numeric:tabular-nums;background:#fbfcfd;color:var(--ink)}
+.field input:focus{outline:2px solid var(--navy);outline-offset:1px;border-color:var(--navy)}
+.field .unit{font-size:13px;color:var(--mute);min-width:26px}
+.field input.small{width:76px}
+.stepper{display:flex;gap:4px}
+.stepper button{width:34px;height:36px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:18px;color:var(--navy);font-family:inherit}
+.stepper button:active{background:#eef3f8}
+
+.presets{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}
+.presets button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-family:inherit;color:var(--ink)}
+.presets button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+
+table.grid{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.grid th,.grid td{padding:7px 4px;text-align:right;border-bottom:1px solid var(--line)}
+.grid th{color:var(--mute);font-weight:500}
+.grid th:first-child,.grid td:first-child{text-align:left}
+.grid tr.hit td{background:var(--accent-soft);font-weight:600}
+h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
+.note{font-size:11.5px;color:var(--mute);line-height:1.55;margin:8px 0 0}
+.formula{font-size:12px;color:var(--ink);background:#fff;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;line-height:1.6;font-variant-numeric:tabular-nums}
+.install{font-size:12px;color:var(--mute);margin-top:18px;line-height:1.6}
+@media (prefers-reduced-motion:no-preference){.result .big{transition:opacity .15s}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>借入可能額 早見計算</h1>
+  <p>審査金利と返済負担率から、年収ごとの借入上限を逆算します</p>
+</header>
+
+<div class="result" role="status" aria-live="polite">
+  <div class="label" id="resLabel">借入可能額の目安</div>
+  <div class="big"><span id="resMain">—</span><small id="resUnit">万円</small></div>
+  <div class="sub">
+    <div>審査上の月々返済 <b id="resPmt">—</b></div>
+    <div>実行金利での月々 <b id="resReal">—</b></div>
+  </div>
+  <div class="warn" id="resWarn"></div>
+</div>
+
+<div class="mode" role="tablist">
+  <button role="tab" aria-pressed="true" data-mode="cap">年収 → 借入上限</button>
+  <button role="tab" aria-pressed="false" data-mode="need">借入額 → 必要年収</button>
+</div>
+
+<div class="presets" id="presets">
+  <button data-rate="4.0" data-ratio="35">auじぶん 想定（4.0%・35%）</button>
+  <button data-rate="3.5" data-ratio="35">3.5%・35%</button>
+  <button data-rate="4.0" data-ratio="40">4.0%・40%</button>
+  <button data-rate="3.0" data-ratio="35">3.0%・35%</button>
+</div>
+
+<section class="card">
+  <div class="row" id="rowIncome">
+    <label>年収（税込・前年）<span>本人の源泉徴収票の金額</span></label>
+    <div class="field"><input type="number" inputmode="decimal" id="income" value="1600" step="50"><span class="unit">万円</span></div>
+  </div>
+  <div class="row">
+    <label>収入合算する年収<span>配偶者等。なければ0</span></label>
+    <div class="field"><input type="number" inputmode="decimal" id="income2" value="0" step="50"><span class="unit">万円</span></div>
+  </div>
+  <div class="row" id="rowLoan" style="display:none">
+    <label>希望借入額<span>物件価格＋諸費用</span></label>
+    <div class="field"><input type="number" inputmode="decimal" id="loan" value="13170" step="100"><span class="unit">万円</span></div>
+  </div>
+  <div class="row">
+    <label>他のローンの年間返済額<span>車・カード・奨学金など</span></label>
+    <div class="field"><input type="number" inputmode="decimal" id="other" value="0" step="10"><span class="unit">万円</span></div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="row">
+    <label>審査金利<span>銀行が審査に使う想定金利</span></label>
+    <div class="field"><input type="number" inputmode="decimal" id="rate" value="4.0" step="0.1" class="small"><span class="unit">%</span></div>
+  </div>
+  <div class="row">
+    <label>返済負担率の上限<span>年収に対する年間返済額</span></label>
+    <div class="field"><input type="number" inputmode="decimal" id="ratio" value="35" step="1" class="small"><span class="unit">%</span></div>
+  </div>
+  <div class="row">
+    <label>返済期間</label>
+    <div class="field">
+      <input type="number" inputmode="numeric" id="years" value="49" min="1" max="50" class="small"><span class="unit">年</span>
+      <input type="number" inputmode="numeric" id="months" value="5" min="0" max="11" class="small" style="width:52px"><span class="unit">ヶ月</span>
+    </div>
+  </div>
+  <div class="row">
+    <label>実行金利（参考）<span>実際の月々返済の計算用</span></label>
+    <div class="field"><input type="number" inputmode="decimal" id="realRate" value="1.09" step="0.01" class="small"><span class="unit">%</span></div>
+  </div>
+</section>
+
+<h2>年収別の早見表（現在の審査条件）</h2>
+<section class="card" style="padding:0 10px">
+  <table class="grid" id="grid"></table>
+  <p class="note">黄色＝入力した年収（合算後）の行。単位：万円。</p>
+</section>
+
+<h2>計算式</h2>
+<div class="formula" id="formula"></div>
+
+<p class="note">審査金利・負担率は銀行ごとに異なり非開示です。年収は前年の税込年収、期間は完済時年齢の要件（多くは80歳未満）で上限が決まります。結果は目安であり、実際の承認額は各行の審査によります。</p>
+<p class="install">iPhoneでの使い方：Safariでこのファイルを開き、共有ボタン →「ホーム画面に追加」。アプリのように起動でき、入力値は端末に保存されます。</p>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const ids=['income','income2','loan','other','rate','ratio','years','months','realRate'];
+let mode='cap';
+const fmt=n=>Math.round(n).toLocaleString('ja-JP');
+const man=n=>fmt(n/10000);
+function annuity(r,n){const m=r/12;return m===0?n:(1-Math.pow(1+m,-n))/m;}
+function pmt(r,n,pv){const m=r/12;return m===0?pv/n:pv*m/(1-Math.pow(1+m,-n));}
+function read(){const o={};ids.forEach(i=>o[i]=parseFloat($(i).value)||0);return o;}
+function save(){try{localStorage.setItem('loancalc',JSON.stringify(read()));}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem('loancalc')||'null');if(s)ids.forEach(i=>{if(s[i]!==undefined)$(i).value=s[i];});}catch(e){}}
+function calc(){
+  const v=read(); const n=Math.max(1,Math.round(v.years*12+v.months)); const r=v.rate/100; const ratio=v.ratio/100;
+  const incomeAll=(v.income+v.income2)*10000; const other=v.other*10000; const af=annuity(r,n);
+  if(mode==='cap'){
+    const capYear=Math.max(0,incomeAll*ratio-other); const capMonth=capYear/12; const loan=capMonth*af;
+    $('resLabel').textContent=`借入可能額の目安（年収${fmt(incomeAll/10000)}万円・${v.years}年${v.months?v.months+'ヶ月':''}）`;
+    $('resMain').textContent=man(loan); $('resUnit').textContent='万円';
+    $('resPmt').textContent=fmt(capMonth)+'円（'+v.rate+'%で計算）';
+    $('resReal').textContent=fmt(pmt(v.realRate/100,n,loan))+'円';
+    const w=$('resWarn'); if(v.loan>0&&mode==='cap'){w.style.display='none';} w.style.display='none';
+    $('formula').innerHTML=`年間返済上限 ＝（年収 ${fmt(incomeAll/10000)}万円 × ${v.ratio}%）− 他ローン ${fmt(v.other)}万円 ＝ <b>${man(capYear)}万円</b><br>月々の上限 ＝ ÷12 ＝ <b>${fmt(capMonth)}円</b><br>年金現価係数（審査金利${v.rate}%・${n}回）＝ {1 −(1＋${(r/12).toFixed(6)})^−${n}} ÷ ${(r/12).toFixed(6)} ＝ <b>${af.toFixed(1)}</b><br>借入可能額 ＝ ${fmt(capMonth)}円 × ${af.toFixed(1)} ＝ <b>${man(capMonth*af)}万円</b><br><span style="color:var(--mute)">Excel：=PV(${v.rate}%/12, ${n}, -年収×${v.ratio}%/12)</span>`;
+  }else{
+    const loan=v.loan*10000; const monthNeed=loan/af; const yearNeed=monthNeed*12+other; const incomeNeed=yearNeed/ratio;
+    $('resLabel').textContent=`借入${fmt(v.loan)}万円に必要な年収（${v.years}年${v.months?v.months+'ヶ月':''}）`;
+    $('resMain').textContent=man(incomeNeed); $('resUnit').textContent='万円';
+    $('resPmt').textContent=fmt(monthNeed)+'円（'+v.rate+'%で計算）';
+    $('resReal').textContent=fmt(pmt(v.realRate/100,n,loan))+'円';
+    const w=$('resWarn'); const gap=incomeNeed-incomeAll;
+    if(incomeAll>0&&gap>0){w.style.display='block';w.textContent=`現在の年収${fmt(incomeAll/10000)}万円では約${man(gap)}万円不足。上限は約${man(Math.max(0,incomeAll*ratio-other)/12*af)}万円`;}
+    else if(incomeAll>0){w.style.display='block';w.style.background='#DDEBF7';w.style.color='#1F4E79';w.textContent=`現在の年収${fmt(incomeAll/10000)}万円で足ります（負担率 ${(yearNeed/incomeAll*100).toFixed(1)}%）`;}
+    else w.style.display='none';
+    if(gap>0){w.style.background='var(--accent)';w.style.color='#3a2a00';}
+    $('formula').innerHTML=`審査上の月々返済 ＝ 借入 ${fmt(v.loan)}万円 ÷ 年金現価係数 ${af.toFixed(1)} ＝ <b>${fmt(monthNeed)}円</b><br>年間返済 ＝ ×12 ＋ 他ローン ${fmt(v.other)}万円 ＝ <b>${man(yearNeed)}万円</b><br>必要年収 ＝ ÷ ${v.ratio}% ＝ <b>${man(incomeNeed)}万円</b>`;
+  }
+  // grid
+  const terms=[[35,0],[40,0],[45,0],[v.years,v.months]];
+  const seen=new Set(); const cols=terms.filter(t=>{const k=t[0]+'-'+t[1];if(seen.has(k))return false;seen.add(k);return true;});
+  let html='<tr><th>年収</th>'+cols.map(t=>`<th>${t[0]}年${t[1]?t[1]+'ヶ月':''}</th>`).join('')+'</tr>';
+  const base=Math.round(incomeAll/10000/100)*100||1000; const rows=[]; for(let y=Math.max(300,base-600);y<=base+600;y+=200)rows.push(y);
+  const hit=Math.round(incomeAll/10000);
+  rows.forEach(y=>{const cap=Math.max(0,y*10000*ratio-other)/12;const isHit=Math.abs(y-hit)<100;html+=`<tr class="${isHit?'hit':''}"><td>${fmt(y)}</td>`+cols.map(t=>{const nn=t[0]*12+t[1];return `<td>${man(cap*annuity(r,nn))}</td>`;}).join('')+'</tr>';});
+  $('grid').innerHTML=html; save();
+}
+ids.forEach(i=>$(i).addEventListener('input',calc));
+document.querySelectorAll('.mode button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;document.querySelectorAll('.mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));$('rowLoan').style.display=mode==='need'?'':'none';calc();}));
+document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{$('rate').value=b.dataset.rate;$('ratio').value=b.dataset.ratio;document.querySelectorAll('#presets button').forEach(x=>x.setAttribute('aria-pressed',x===b));calc();}));
+load(); calc();
+</script>
+</body>
+</html>
