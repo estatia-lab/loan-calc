@@ -96,7 +96,10 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
   <div style="background:var(--accent-soft);border-radius:10px;padding:12px 14px;margin:8px 0 6px">
     <div style="font-size:12.5px;color:#5a4a00" id="custHead">—</div>
     <div style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.2;margin-top:2px"><span id="custPay">—</span><small style="font-size:14px;font-weight:600"> 円／月</small></div>
-    <div style="font-size:12.5px;color:#5a4a00;margin-top:4px" id="custSub"></div>
+    <div id="custSubWrap" style="display:none;margin:8px -14px -12px;padding:12px 14px;background:#DDEBF7;border-radius:0 0 10px 10px">
+      <div style="font-size:12.5px;color:#1F4E79">管理費・修繕積立金 <b id="custMg">—</b> を含めた毎月の住居費</div>
+      <div style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.2;margin-top:2px"><span id="custSub">—</span><small style="font-size:14px;font-weight:600"> 円／月</small></div>
+    </div>
   </div>
   <table class="grid" id="custGrid" style="margin-bottom:6px;white-space:nowrap"></table>
   <p class="note" style="margin:0 0 8px" id="custNote"></p>
@@ -124,7 +127,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
   </div>
   <div class="row" id="rowLoan" style="display:none">
     <label>希望借入額<span>物件価格＋諸費用</span></label>
-    <div class="field"><input type="number" inputmode="decimal" id="loan" value="13170" step="100"><span class="unit">万円</span></div>
+    <div class="field"><input type="number" inputmode="decimal" id="loan" value="" placeholder="0" step="100"><span class="unit">万円</span></div>
   </div>
   <div class="row">
     <label>他のローンの年間返済額<span>投資用物件・車・カード・奨学金など</span></label>
@@ -198,9 +201,9 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
     </div>
   </div>
   <div class="row">
-    <label>年齢から算出した最長期間<span id="termNote">—</span></label>
+    <label>年齢から算出した最長期間<span id="termNote">—</span><span>自動で返済期間に反映されます</span></label>
     <div class="field"><b id="termCalc" style="font-size:18px;font-variant-numeric:tabular-nums">—</b>
-      <button id="applyTerm" style="margin-left:8px;border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;font-weight:600">期間に反映</button></div>
+      <button id="applyTerm" style="margin-left:8px;border:1px solid var(--line);background:#fff;color:var(--mute);border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit">再反映</button></div>
   </div>
 </section>
 <section class="card">
@@ -260,14 +263,15 @@ function calc(){
     const w=$('resWarn'); if(v.loan>0&&mode==='cap'){w.style.display='none';} w.style.display='none';
     $('formula').innerHTML=`年間返済上限 ＝（年収 ${fmt(incomeAll/10000)}万円 × ${v.ratio}%）− 他ローン ${fmt(v.other)}万円 ＝ <b>${man(capYear)}万円</b><br>月々の上限 ＝ ÷12 ＝ <b>${fmt(capMonth)}円</b><br>年金現価係数（審査金利${v.rate}%・${n}回）＝ {1 −(1＋${(r/12).toFixed(6)})^−${n}} ÷ ${(r/12).toFixed(6)} ＝ <b>${af.toFixed(1)}</b><br>借入可能額 ＝ ${fmt(capMonth)}円 × ${af.toFixed(1)} ＝ <b>${man(capMonth*af)}万円</b><br><span style="color:var(--mute)">Excel：=PV(${v.rate}%/12, ${n}, -年収×${v.ratio}%/12)</span>`;
   }else{
-    const loan=v.loan*10000; capLoanForCust=loan; const monthNeed=loan/af; const yearNeed=monthNeed*12+other; const incomeNeed=yearNeed/ratio;
+    const loan=v.loan*10000; capLoanForCust=loan; const monthNeed=loan/af; const yearNeed=monthNeed*12+other; const incomeNeed=Math.max(0,yearNeed/ratio-v.income2*10000);
     $('resLabel').textContent=`借入${fmt(v.loan)}万円に必要な年収（${v.years}年${v.months?v.months+'ヶ月':''}）`;
     $('resMain').textContent=man(incomeNeed); $('resUnit').textContent='万円';
     $('resPmt').textContent=fmt(monthNeed)+'円（'+v.rate+'%で計算）';
     $('resReal').textContent=fmt(pmt(v.realRate/100,n,loan))+'円'; $('resRealRate').textContent=v.realRate.toFixed(2)+'%';
-    const w=$('resWarn'); const gap=incomeNeed-incomeAll;
-    if(incomeAll>0&&gap>0){w.style.display='block';w.textContent=`現在の年収${fmt(incomeAll/10000)}万円では約${man(gap)}万円不足。上限は約${man(Math.max(0,incomeAll*ratio-other)/12*af)}万円`;}
-    else if(incomeAll>0){w.style.display='block';w.style.background='#DDEBF7';w.style.color='#1F4E79';w.textContent=`現在の年収${fmt(incomeAll/10000)}万円で足ります（負担率 ${(yearNeed/incomeAll*100).toFixed(1)}%）`;}
+    $('income').value=Math.round(incomeNeed/10000)||'';
+    const w=$('resWarn'); const gap=incomeNeed-incomeAll; w.style.display='none';
+    if(false&&incomeAll>0&&gap>0){w.style.display='block';w.textContent=`現在の年収${fmt(incomeAll/10000)}万円では約${man(gap)}万円不足。上限は約${man(Math.max(0,incomeAll*ratio-other)/12*af)}万円`;}
+    else if(false&&incomeAll>0){w.style.display='block';w.style.background='#DDEBF7';w.style.color='#1F4E79';w.textContent=`現在の年収${fmt(incomeAll/10000)}万円で足ります（負担率 ${(yearNeed/incomeAll*100).toFixed(1)}%）`;}
     else w.style.display='none';
     if(gap>0){w.style.background='var(--accent)';w.style.color='#3a2a00';}
     $('formula').innerHTML=`審査上の月々返済 ＝ 借入 ${fmt(v.loan)}万円 ÷ 年金現価係数 ${af.toFixed(1)} ＝ <b>${fmt(monthNeed)}円</b><br>年間返済 ＝ ×12 ＋ 他ローン ${fmt(v.other)}万円 ＝ <b>${man(yearNeed)}万円</b><br>必要年収 ＝ ÷ ${v.ratio}% ＝ <b>${man(incomeNeed)}万円</b>`;
@@ -283,11 +287,12 @@ function calc(){
 }
 function custCalc(v,n,capLoan){
   const L=(parseFloat($('showLoan').value)||0)*10000||capLoan; const rr=v.realRate/100; const mg=(parseFloat($('mgmt').value)||0)*10000;
-  if(!L||!n){$('custPay').textContent='—';return;}
+  if(!L||!n){$('custPay').textContent='—';$('custHead').textContent='年収を入力すると借入可能額で表示されます';$('custSubWrap').style.display='none';$('custGrid').innerHTML='';$('showLoan').placeholder='';return;}
   const m=pmt(rr,n,L);
   $('custHead').textContent=`変動金利 年${v.realRate.toFixed(2)}%・借入 ${man(L)}万円・${v.years}年${v.months?v.months+'ヶ月':''}の場合`;
   $('custPay').textContent=fmt(m);
-  $('custSub').textContent=mg?`管理費・修繕積立金 ${fmt(mg)}円を含めた月々の住居費：${fmt(m+mg)}円`:'';
+  $('custSubWrap').style.display=mg?'block':'none'; $('custMg').textContent=fmt(mg)+'円'; $('custSub').textContent=fmt(m+mg);
+  $('showLoan').placeholder=man(capLoan);
   let html='<tr><th>金利上昇</th><th>適用金利</th><th>月々の返済額</th><th>増加額</th></tr>';
   [[0,'現在の金利'],[0.0025,'＋0.25%'],[0.005,'＋0.50%'],[0.0075,'＋0.75%'],[0.01,'＋1.00%'],[0.0125,'＋1.25%'],[0.015,'＋1.50%'],[0.02,'＋2.00%']].forEach(([d,lab])=>{const mm=pmt(rr+d,n,L);html+=`<tr class="${d===0?'hit':''}"><td>${lab}</td><td><b>${((rr+d)*100).toFixed(2)}%</b></td><td>${fmt(mm)}円</td><td>${d?'+'+fmt(mm-m)+'円':'—'}</td></tr>`;});
   const rule=$('ruleSel').value;
@@ -298,9 +303,15 @@ function custCalc(v,n,capLoan){
 }
 
 ids.forEach(i=>$(i).addEventListener('input',calc)); ['showLoan','mgmt','ruleSel'].forEach(i=>$(i).addEventListener('input',calc));$('ruleSel').addEventListener('change',calc);
-document.querySelectorAll('.mode button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;document.querySelectorAll('.mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));$('rowLoan').style.display=mode==='need'?'':'none';calc();}));
+document.querySelectorAll('.mode button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;document.querySelectorAll('.mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  $('rowLoan').style.display=mode==='need'?'':'none';
+  ['income','income2','loan','other','showLoan'].forEach(i=>$(i).value='');
+  const inc=$('income'), lab=document.querySelector('#rowIncome label');
+  if(mode==='need'){inc.readOnly=true;inc.style.background='#EEF4FB';inc.style.color='var(--navy)';lab.innerHTML='必要年収（自動計算）<span>希望借入額から逆算した年収</span>';}
+  else{inc.readOnly=false;inc.style.background='';inc.style.color='';lab.innerHTML='年収（税込・前年）<span>本人の源泉徴収票の金額</span>';}
+  calc();}));
 document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{$('rate').value=b.dataset.rate;$('ratio').value=b.dataset.ratio;document.querySelectorAll('#presets button').forEach(x=>x.setAttribute('aria-pressed',x===b));calc();}));
-try{if(localStorage.getItem('loancalc_ver')!=='v7'){['loancalc','loancalc2','loancalc3'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('loancalc_ver','v7');}}catch(e){}
+try{if(localStorage.getItem('loancalc_ver')!=='v10'){['loancalc','loancalc2','loancalc3'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('loancalc_ver','v10');}}catch(e){}
 load(); calc();
 function monthsBetween(a,b){return (b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth())-(b.getDate()<a.getDate()?1:0);}
 function calcTerm(){
@@ -322,8 +333,9 @@ function calcTerm(){
   $('termCalc').textContent=`${y}年${m?m+'ヶ月':''}`; $('termNote').textContent=note+(months===maxT?'・銀行上限で頭打ち':'');
   return months;
 }
-['dob','age','execDate','ageLimit','limitType','maxTerm','termUnit'].forEach(i=>$(i).addEventListener('input',()=>{calcTerm();saveExtra();}));
-$('applyTerm').addEventListener('click',()=>{const mo=calcTerm(); if(mo){$('years').value=Math.floor(mo/12);$('months').value=mo%12;calc();}});
+['dob','age','execDate','ageLimit','limitType','maxTerm','termUnit'].forEach(i=>{$(i).addEventListener('input',()=>{autoTerm();saveExtra();});$(i).addEventListener('change',()=>{autoTerm();saveExtra();});});
+function autoTerm(){const mo=calcTerm(); if(mo){$('years').value=Math.floor(mo/12);$('months').value=mo%12;} calc();}
+$('applyTerm').addEventListener('click',autoTerm);
 function saveExtra(){try{const o={};['dob','age','execDate','ageLimit','limitType','maxTerm','termUnit'].forEach(i=>o[i]=$(i).value);localStorage.setItem('loancalc2',JSON.stringify(o));}catch(e){}}
 function loadExtra(){try{const s=JSON.parse(localStorage.getItem('loancalc2')||'null');if(s)Object.keys(s).forEach(i=>{if($(i))$(i).value=s[i];});}catch(e){}}
 loadExtra(); calcTerm();
@@ -363,7 +375,7 @@ function saveInv(){try{localStorage.setItem('loancalc3',JSON.stringify(inv));}ca
 function loadInv(){try{const s=JSON.parse(localStorage.getItem('loancalc3')||'null');if(Array.isArray(s))inv=s;}catch(e){}}
 loadInv(); renderInv();
 (function(){const ed=$('execDate'); if(!ed.value){const d=new Date(); d.setMonth(d.getMonth()+2); ed.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}})();
-calcTerm(); calc();
+autoTerm();
 
 </script>
 </body>
