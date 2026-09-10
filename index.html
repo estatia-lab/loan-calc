@@ -66,7 +66,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
 <main>
 <header>
   <h1>借入可能額 早見計算</h1>
-  <p>審査金利と返済負担率から、年収ごとの借入上限を逆算します</p>
+  <p>年齢から借入年数を、年収から借入上限を逆算します</p>
 </header>
 
 <div class="result" role="status" aria-live="polite">
@@ -112,6 +112,52 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
 
 <section class="card">
   <div class="row">
+    <label>生年月日<span>入力すると年齢と借入年数を自動計算</span></label>
+    <div class="field"><input type="date" id="dob" value="1996-07-08" style="width:150px;font-size:15px"></div>
+  </div>
+  <div class="row">
+    <label>現在の年齢<span>生年月日が不明なときはこちら</span></label>
+    <div class="field"><input type="number" inputmode="numeric" id="age" value="" placeholder="30" class="small"><span class="unit">歳</span></div>
+  </div>
+  <div class="row">
+    <label>融資実行（引渡）予定日</label>
+    <div class="field"><input type="date" id="execDate" value="2026-11-01" style="width:150px;font-size:15px"></div>
+  </div>
+  <div class="row">
+    <label>完済時の年齢上限<span>銀行の要件。多くは80歳</span></label>
+    <div class="field">
+      <select id="ageLimit" style="font-size:15px;padding:6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:#fbfcfd">
+        <option value="80" selected>満80歳</option><option value="81">満81歳</option><option value="82">満82歳</option><option value="83">満83歳</option><option value="84">満84歳</option><option value="85">満85歳</option>
+      </select>
+      <select id="limitType" style="font-size:13px;padding:6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:#fbfcfd">
+        <option value="under" selected>未満</option><option value="birthday">誕生日まで</option>
+      </select>
+    </div>
+  </div>
+  <div class="row">
+    <label>銀行の最長借入期間<span>商品ごとの上限</span></label>
+    <div class="field">
+      <select id="maxTerm" style="font-size:15px;padding:6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:#fbfcfd">
+        <option value="50" selected>50年</option><option value="45">45年</option><option value="40">40年</option><option value="35">35年</option>
+      </select>
+    </div>
+  </div>
+  <div class="row">
+    <label>期間の刻み<span>1年単位の銀行は端数切捨て</span></label>
+    <div class="field">
+      <select id="termUnit" style="font-size:15px;padding:6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:#fbfcfd">
+        <option value="month" selected>1ヶ月単位</option><option value="year">1年単位</option>
+      </select>
+    </div>
+  </div>
+  <div class="row">
+    <label>年齢から算出した最長期間<span id="termNote">—</span></label>
+    <div class="field"><b id="termCalc" style="font-size:18px;font-variant-numeric:tabular-nums">—</b>
+      <button id="applyTerm" style="margin-left:8px;border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;font-weight:600">期間に反映</button></div>
+  </div>
+</section>
+<section class="card">
+  <div class="row">
     <label>審査金利<span>銀行が審査に使う想定金利</span></label>
     <div class="field"><input type="number" inputmode="decimal" id="rate" value="4.0" step="0.1" class="small"><span class="unit">%</span></div>
   </div>
@@ -138,11 +184,9 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
   <p class="note">黄色＝入力した年収（合算後）の行。単位：万円。</p>
 </section>
 
-<h2>計算式</h2>
-<div class="formula" id="formula"></div>
+<div id="formula" style="display:none"></div>
 
-<p class="note">審査金利・負担率は銀行ごとに異なり非開示です。年収は前年の税込年収、期間は完済時年齢の要件（多くは80歳未満）で上限が決まります。結果は目安であり、実際の承認額は各行の審査によります。</p>
-<p class="install">iPhoneでの使い方：Safariでこのファイルを開き、共有ボタン →「ホーム画面に追加」。アプリのように起動でき、入力値は端末に保存されます。</p>
+<p class="note">借入期間の上限は「完済時年齢の要件」と「銀行の最長期間」の短い方です。「未満」は誕生日の前月まで（例：SBI新生は80歳未満）、「誕生日まで」は誕生日の月まで（例：auじぶん・三菱UFJ）。auは実務上2〜3ヶ月の余裕を取ります。審査金利・負担率は銀行ごとに異なり非開示です。年収は前年の税込年収、期間は完済時年齢の要件（多くは80歳未満）で上限が決まります。結果は目安であり、実際の承認額は各行の審査によります。</p>
 </main>
 
 <script>
@@ -193,6 +237,30 @@ ids.forEach(i=>$(i).addEventListener('input',calc));
 document.querySelectorAll('.mode button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;document.querySelectorAll('.mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));$('rowLoan').style.display=mode==='need'?'':'none';calc();}));
 document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{$('rate').value=b.dataset.rate;$('ratio').value=b.dataset.ratio;document.querySelectorAll('#presets button').forEach(x=>x.setAttribute('aria-pressed',x===b));calc();}));
 load(); calc();
+function monthsBetween(a,b){return (b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth())-(b.getDate()<a.getDate()?1:0);}
+function calcTerm(){
+  const exec=$('execDate').value?new Date($('execDate').value):new Date();
+  const lim=parseInt($('ageLimit').value); const under=$('limitType').value==='under'; const maxT=parseInt($('maxTerm').value)*12; const unitY=$('termUnit').value==='year';
+  let ageAtExec=null, months=null, note='';
+  if($('dob').value){
+    const dob=new Date($('dob').value); ageAtExec=Math.floor(monthsBetween(dob,exec)/12);
+    const limitDate=new Date(dob.getFullYear()+lim,dob.getMonth(),dob.getDate());
+    months=monthsBetween(exec,limitDate); if(under) months-=1;
+    note=`実行時${ageAtExec}歳・${lim}歳の誕生日 ${limitDate.getFullYear()}/${limitDate.getMonth()+1}/${limitDate.getDate()}`;
+  }else if($('age').value){
+    ageAtExec=parseInt($('age').value); months=(lim-ageAtExec)*12; if(under) months-=12; note=`実行時${ageAtExec}歳（誕生日不明のため年単位で概算）`;
+  }
+  if(months===null){$('termCalc').textContent='—';$('termNote').textContent='生年月日か年齢を入力';return null;}
+  months=Math.max(12,Math.min(months,maxT)); if(unitY) months=Math.floor(months/12)*12;
+  const y=Math.floor(months/12), m=months%12;
+  $('termCalc').textContent=`${y}年${m?m+'ヶ月':''}`; $('termNote').textContent=note+(months===maxT?'・銀行上限で頭打ち':'');
+  return months;
+}
+['dob','age','execDate','ageLimit','limitType','maxTerm','termUnit'].forEach(i=>$(i).addEventListener('input',()=>{calcTerm();saveExtra();}));
+$('applyTerm').addEventListener('click',()=>{const mo=calcTerm(); if(mo){$('years').value=Math.floor(mo/12);$('months').value=mo%12;calc();}});
+function saveExtra(){try{const o={};['dob','age','execDate','ageLimit','limitType','maxTerm','termUnit'].forEach(i=>o[i]=$(i).value);localStorage.setItem('loancalc2',JSON.stringify(o));}catch(e){}}
+function loadExtra(){try{const s=JSON.parse(localStorage.getItem('loancalc2')||'null');if(s)Object.keys(s).forEach(i=>{if($(i))$(i).value=s[i];});}catch(e){}}
+loadExtra(); calcTerm();
 </script>
 </body>
 </html>
