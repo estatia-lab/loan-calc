@@ -164,7 +164,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
   </div>
   <div class="row">
     <label>現在の年齢<span>生年月日が不明なときはこちら</span></label>
-    <div class="field"><input type="number" inputmode="numeric" id="age" value="" placeholder="30" class="small"><span class="unit">歳</span></div>
+    <div class="field"><input type="number" inputmode="numeric" id="age" value="" placeholder="" class="small"><span class="unit">歳</span></div>
   </div>
   <div class="row">
     <label>融資実行（引渡）予定日</label>
@@ -300,7 +300,7 @@ function custCalc(v,n,capLoan){
 ids.forEach(i=>$(i).addEventListener('input',calc)); ['showLoan','mgmt','ruleSel'].forEach(i=>$(i).addEventListener('input',calc));$('ruleSel').addEventListener('change',calc);
 document.querySelectorAll('.mode button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;document.querySelectorAll('.mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));$('rowLoan').style.display=mode==='need'?'':'none';calc();}));
 document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{$('rate').value=b.dataset.rate;$('ratio').value=b.dataset.ratio;document.querySelectorAll('#presets button').forEach(x=>x.setAttribute('aria-pressed',x===b));calc();}));
-try{if(localStorage.getItem('loancalc_ver')!=='v6'){['loancalc','loancalc2','loancalc3'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('loancalc_ver','v6');}}catch(e){}
+try{if(localStorage.getItem('loancalc_ver')!=='v7'){['loancalc','loancalc2','loancalc3'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('loancalc_ver','v7');}}catch(e){}
 load(); calc();
 function monthsBetween(a,b){return (b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth())-(b.getDate()<a.getDate()?1:0);}
 function calcTerm(){
@@ -312,10 +312,11 @@ function calcTerm(){
     const limitDate=new Date(dob.getFullYear()+lim,dob.getMonth(),dob.getDate());
     months=monthsBetween(exec,limitDate); if(under) months-=1;
     note=`実行時${ageAtExec}歳・${lim}歳の誕生日 ${limitDate.getFullYear()}/${limitDate.getMonth()+1}/${limitDate.getDate()}`;
+    const today=new Date(); $('age').placeholder=String(Math.floor(monthsBetween(dob,today)/12)); $('age').value='';
   }else if($('age').value){
     ageAtExec=parseInt($('age').value); months=(lim-ageAtExec)*12; if(under) months-=12; note=`実行時${ageAtExec}歳（誕生日不明のため年単位で概算）`;
   }
-  if(months===null){$('termCalc').textContent='—';$('termNote').textContent='生年月日か年齢を入力';return null;}
+  if(months===null){$('termCalc').textContent='—';$('termNote').textContent='生年月日か年齢を入力';$('age').placeholder='30';return null;}
   months=Math.max(12,Math.min(months,maxT)); if(unitY) months=Math.floor(months/12)*12;
   const y=Math.floor(months/12), m=months%12;
   $('termCalc').textContent=`${y}年${m?m+'ヶ月':''}`; $('termNote').textContent=note+(months===maxT?'・銀行上限で頭打ち':'');
