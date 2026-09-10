@@ -74,18 +74,40 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
   <div class="big"><span id="resMain">—</span><small id="resUnit">万円</small></div>
   <div class="sub">
     <div>審査上の月々返済 <b id="resPmt">—</b></div>
-    <div>実行金利での月々 <b id="resReal">—</b></div>
+    <div>変動金利 <b id="resRealRate">—</b> での月々 <b id="resReal">—</b></div>
   </div>
   <div class="warn" id="resWarn"></div>
 </div>
 
+<section class="card" id="custCard" style="margin-top:12px;border-color:var(--navy)">
+  <div class="row" style="border-bottom:0;padding-bottom:2px"><label><b style="color:var(--navy)">お客さま向け：月々のお支払い目安</b><span>変動金利で借りた場合の毎月の返済額（元利均等・ボーナス返済なし）</span></label></div>
+  <div class="row">
+    <label>借入額<span>未入力なら借入可能額で表示</span></label>
+    <div class="field"><input type="number" inputmode="decimal" id="showLoan" value=""><span class="unit">万円</span></div>
+  </div>
+  <div class="row">
+    <label>管理費・修繕積立金（任意）<span>月額。入れると合計も表示</span></label>
+    <div class="field"><input type="number" inputmode="decimal" id="mgmt" value="" placeholder="0"><span class="unit">円</span></div>
+  </div>
+  <div class="row">
+    <label>5年・125%ルール<span>銀行によって「あり」「なし」が分かれます</span></label>
+    <div class="field"><select id="ruleSel" style="font-size:15px;padding:6px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:#fbfcfd"><option value="none" selected>なし</option><option value="yes">あり</option></select></div>
+  </div>
+  <div style="background:var(--accent-soft);border-radius:10px;padding:12px 14px;margin:8px 0 6px">
+    <div style="font-size:12.5px;color:#5a4a00" id="custHead">—</div>
+    <div style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.2;margin-top:2px"><span id="custPay">—</span><small style="font-size:14px;font-weight:600"> 円／月</small></div>
+    <div style="font-size:12.5px;color:#5a4a00;margin-top:4px" id="custSub"></div>
+  </div>
+  <table class="grid" id="custGrid" style="margin-bottom:6px;white-space:nowrap"></table>
+  <p class="note" style="margin:0 0 8px" id="custNote"></p>
+</section>
 <div class="mode" role="tablist">
   <button role="tab" aria-pressed="true" data-mode="cap">年収 → 借入上限</button>
   <button role="tab" aria-pressed="false" data-mode="need">借入額 → 必要年収</button>
 </div>
 
 <div class="presets" id="presets">
-  <button data-rate="4.0" data-ratio="35">auじぶん 想定（4.0%・35%）</button>
+  <button data-rate="4.0" data-ratio="35">auじぶん（4.0%・35%）</button>
   <button data-rate="3.5" data-ratio="35">3.5%・35%</button>
   <button data-rate="4.0" data-ratio="40">4.0%・40%</button>
   <button data-rate="3.0" data-ratio="35">3.0%・35%</button>
@@ -105,10 +127,35 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
     <div class="field"><input type="number" inputmode="decimal" id="loan" value="13170" step="100"><span class="unit">万円</span></div>
   </div>
   <div class="row">
-    <label>他のローンの年間返済額<span>車・カード・奨学金など</span></label>
+    <label>他のローンの年間返済額<span>投資用物件・車・カード・奨学金など</span></label>
     <div class="field"><input type="number" inputmode="decimal" id="other" value="0" step="10"><span class="unit">万円</span></div>
   </div>
 </section>
+
+<section class="card" id="invCard">
+  <div class="row" style="border-bottom:0;padding-bottom:4px"><label><b>投資用物件のローン（物件ごとに入力）</b><span>返済額が不明でも、物件価格と金利から推定。フルローン・元利均等・毎月一定で概算</span></label></div>
+  <div id="invRows"></div>
+<input type="checkbox" id="invStrict" style="display:none">
+  <div class="row" style="border-bottom:0">
+    <button id="addInv" style="border:1px dashed var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;font-weight:600">＋ 物件を追加</button>
+    <div class="field"><label style="font-size:12px;color:var(--mute)">合計 年間返済</label><b id="invTotal" style="font-size:16px;font-variant-numeric:tabular-nums">0万円</b>
+      <button id="applyInv" style="margin-left:6px;border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;font-weight:600">他ローンに反映</button></div>
+  </div>
+</section>
+<style>
+.inv{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:6px 0 8px;background:#fbfcfd}
+.inv .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.inv .hd b{font-size:13px;color:var(--navy)}
+.inv .hd button{border:0;background:transparent;color:var(--mute);font-size:13px;font-family:inherit}
+.inv .g{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+.inv .g label{font-size:11.5px;color:var(--mute);display:block}
+.inv .g input{width:100%;font-size:16px;font-weight:600;text-align:right;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;font-variant-numeric:tabular-nums;background:#fff}
+.inv .g input.name{text-align:left;font-weight:500;font-size:14px}
+.inv .out{margin-top:8px;font-size:12.5px;color:var(--ink);border-top:1px dashed var(--line);padding-top:6px}
+.inv .out b{display:block}
+.inv .out span{display:block;color:var(--mute);margin-top:2px;font-size:12px}
+.inv .out b{font-variant-numeric:tabular-nums}
+</style>
 
 <section class="card">
   <div class="row">
@@ -186,7 +233,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
 
 <div id="formula" style="display:none"></div>
 
-<p class="note">借入期間の上限は「完済時年齢の要件」と「銀行の最長期間」の短い方です。「未満」は誕生日の前月まで（例：SBI新生は80歳未満）、「誕生日まで」は誕生日の月まで（例：auじぶん・三菱UFJ）。auは実務上2〜3ヶ月の余裕を取ります。審査金利・負担率は銀行ごとに異なり非開示です。年収は前年の税込年収、期間は完済時年齢の要件（多くは80歳未満）で上限が決まります。結果は目安であり、実際の承認額は各行の審査によります。</p>
+<p class="note">投資用物件のローンは、家賃収入の有無にかかわらず年間返済額がそのまま返済負担率に算入されるのが一般的です。家賃を収入に加算する銀行、収支が黒字なら算入しない銀行、逆に他ローンも審査金利で再計算する銀行があり、扱いは非開示です。購入年を入れると残債・残期間の目安が出ます（残債は元利均等・金利一定で概算）。借入期間の上限は「完済時年齢の要件」と「銀行の最長期間」の短い方です。「未満」は誕生日の前月まで、「誕生日まで」は誕生日の月までを上限とします（銀行により実務上2〜3ヶ月の余裕を取る場合があります）。審査金利・負担率は銀行ごとに異なり非開示です。年収は前年の税込年収、期間は完済時年齢の要件（多くは80歳未満）で上限が決まります。結果は目安であり、実際の承認額は各行の審査によります。</p>
 </main>
 
 <script>
@@ -201,22 +248,23 @@ function read(){const o={};ids.forEach(i=>o[i]=parseFloat($(i).value)||0);return
 function save(){try{localStorage.setItem('loancalc',JSON.stringify(read()));}catch(e){}}
 function load(){try{const s=JSON.parse(localStorage.getItem('loancalc')||'null');if(s)ids.forEach(i=>{if(s[i]!==undefined)$(i).value=s[i];});}catch(e){}}
 function calc(){
+  let capLoanForCust=0;
   const v=read(); const n=Math.max(1,Math.round(v.years*12+v.months)); const r=v.rate/100; const ratio=v.ratio/100;
   const incomeAll=(v.income+v.income2)*10000; const other=v.other*10000; const af=annuity(r,n);
   if(mode==='cap'){
-    const capYear=Math.max(0,incomeAll*ratio-other); const capMonth=capYear/12; const loan=capMonth*af;
+    const capYear=Math.max(0,incomeAll*ratio-other); const capMonth=capYear/12; const loan=capMonth*af; capLoanForCust=loan;
     $('resLabel').textContent=`借入可能額の目安（年収${fmt(incomeAll/10000)}万円・${v.years}年${v.months?v.months+'ヶ月':''}）`;
     $('resMain').textContent=man(loan); $('resUnit').textContent='万円';
     $('resPmt').textContent=fmt(capMonth)+'円（'+v.rate+'%で計算）';
-    $('resReal').textContent=fmt(pmt(v.realRate/100,n,loan))+'円';
+    $('resReal').textContent=fmt(pmt(v.realRate/100,n,loan))+'円'; $('resRealRate').textContent=v.realRate.toFixed(2)+'%';
     const w=$('resWarn'); if(v.loan>0&&mode==='cap'){w.style.display='none';} w.style.display='none';
     $('formula').innerHTML=`年間返済上限 ＝（年収 ${fmt(incomeAll/10000)}万円 × ${v.ratio}%）− 他ローン ${fmt(v.other)}万円 ＝ <b>${man(capYear)}万円</b><br>月々の上限 ＝ ÷12 ＝ <b>${fmt(capMonth)}円</b><br>年金現価係数（審査金利${v.rate}%・${n}回）＝ {1 −(1＋${(r/12).toFixed(6)})^−${n}} ÷ ${(r/12).toFixed(6)} ＝ <b>${af.toFixed(1)}</b><br>借入可能額 ＝ ${fmt(capMonth)}円 × ${af.toFixed(1)} ＝ <b>${man(capMonth*af)}万円</b><br><span style="color:var(--mute)">Excel：=PV(${v.rate}%/12, ${n}, -年収×${v.ratio}%/12)</span>`;
   }else{
-    const loan=v.loan*10000; const monthNeed=loan/af; const yearNeed=monthNeed*12+other; const incomeNeed=yearNeed/ratio;
+    const loan=v.loan*10000; capLoanForCust=loan; const monthNeed=loan/af; const yearNeed=monthNeed*12+other; const incomeNeed=yearNeed/ratio;
     $('resLabel').textContent=`借入${fmt(v.loan)}万円に必要な年収（${v.years}年${v.months?v.months+'ヶ月':''}）`;
     $('resMain').textContent=man(incomeNeed); $('resUnit').textContent='万円';
     $('resPmt').textContent=fmt(monthNeed)+'円（'+v.rate+'%で計算）';
-    $('resReal').textContent=fmt(pmt(v.realRate/100,n,loan))+'円';
+    $('resReal').textContent=fmt(pmt(v.realRate/100,n,loan))+'円'; $('resRealRate').textContent=v.realRate.toFixed(2)+'%';
     const w=$('resWarn'); const gap=incomeNeed-incomeAll;
     if(incomeAll>0&&gap>0){w.style.display='block';w.textContent=`現在の年収${fmt(incomeAll/10000)}万円では約${man(gap)}万円不足。上限は約${man(Math.max(0,incomeAll*ratio-other)/12*af)}万円`;}
     else if(incomeAll>0){w.style.display='block';w.style.background='#DDEBF7';w.style.color='#1F4E79';w.textContent=`現在の年収${fmt(incomeAll/10000)}万円で足ります（負担率 ${(yearNeed/incomeAll*100).toFixed(1)}%）`;}
@@ -231,9 +279,25 @@ function calc(){
   const base=Math.round(incomeAll/10000/100)*100||1000; const rows=[]; for(let y=Math.max(300,base-600);y<=base+600;y+=200)rows.push(y);
   const hit=Math.round(incomeAll/10000);
   rows.forEach(y=>{const cap=Math.max(0,y*10000*ratio-other)/12;const isHit=Math.abs(y-hit)<100;html+=`<tr class="${isHit?'hit':''}"><td>${fmt(y)}</td>`+cols.map(t=>{const nn=t[0]*12+t[1];return `<td>${man(cap*annuity(r,nn))}</td>`;}).join('')+'</tr>';});
-  $('grid').innerHTML=html; save();
+  $('grid').innerHTML=html; custCalc(v,n,capLoanForCust); save();
 }
-ids.forEach(i=>$(i).addEventListener('input',calc));
+function custCalc(v,n,capLoan){
+  const L=(parseFloat($('showLoan').value)||0)*10000||capLoan; const rr=v.realRate/100; const mg=parseFloat($('mgmt').value)||0;
+  if(!L||!n){$('custPay').textContent='—';return;}
+  const m=pmt(rr,n,L);
+  $('custHead').textContent=`変動金利 年${v.realRate.toFixed(2)}%・借入 ${man(L)}万円・${v.years}年${v.months?v.months+'ヶ月':''}の場合`;
+  $('custPay').textContent=fmt(m);
+  $('custSub').textContent=mg?`管理費・修繕積立金 ${fmt(mg)}円を含めた月々の住居費：${fmt(m+mg)}円`:'';
+  let html='<tr><th>金利上昇</th><th>適用金利</th><th>月々の返済額</th><th>増加額</th></tr>';
+  [[0,'現在の金利'],[0.0025,'＋0.25%'],[0.005,'＋0.50%'],[0.0075,'＋0.75%'],[0.01,'＋1.00%'],[0.0125,'＋1.25%'],[0.015,'＋1.50%'],[0.02,'＋2.00%']].forEach(([d,lab])=>{const mm=pmt(rr+d,n,L);html+=`<tr class="${d===0?'hit':''}"><td>${lab}</td><td><b>${((rr+d)*100).toFixed(2)}%</b></td><td>${fmt(mm)}円</td><td>${d?'+'+fmt(mm-m)+'円':'—'}</td></tr>`;});
+  const rule=$('ruleSel').value;
+  $('custNote').innerHTML = rule==='none'
+   ? '<b>5年・125%ルールなし</b>：変動金利は一般に年2回（多くの銀行は4月1日と10月1日を基準日）見直され、新しい金利は基準日から1〜3ヶ月後の返済分から適用されます（銀行により5月・11月基準など時期は異なります）。金利が変わると<b>次の見直し後の返済から毎月の返済額もそのまま変わります</b>（据置・上限なし）。上の表は、金利が上がった場合の月々の返済額をそのまま示しています。'
+   : '<b>5年・125%ルールあり</b>：変動金利は一般に年2回（多くの銀行は4月1日と10月1日を基準日）見直され、新しい金利は7月と1月の返済分から適用されますが、<b>毎月の返済額は5年間据え置かれ</b>、5年ごとの見直しでも増額は直前の1.25倍までです。上の表の金額は「据置期間が終わった後」の目安で、据置中は返済額の中で利息の割合が増え、元本の減りが遅れます（未払利息が発生する場合あり）。';
+  $('custGrid').innerHTML=html;
+}
+
+ids.forEach(i=>$(i).addEventListener('input',calc)); ['showLoan','mgmt','ruleSel'].forEach(i=>$(i).addEventListener('input',calc));$('ruleSel').addEventListener('change',calc);
 document.querySelectorAll('.mode button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;document.querySelectorAll('.mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));$('rowLoan').style.display=mode==='need'?'':'none';calc();}));
 document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{$('rate').value=b.dataset.rate;$('ratio').value=b.dataset.ratio;document.querySelectorAll('#presets button').forEach(x=>x.setAttribute('aria-pressed',x===b));calc();}));
 load(); calc();
@@ -261,6 +325,41 @@ $('applyTerm').addEventListener('click',()=>{const mo=calcTerm(); if(mo){$('year
 function saveExtra(){try{const o={};['dob','age','execDate','ageLimit','limitType','maxTerm','termUnit'].forEach(i=>o[i]=$(i).value);localStorage.setItem('loancalc2',JSON.stringify(o));}catch(e){}}
 function loadExtra(){try{const s=JSON.parse(localStorage.getItem('loancalc2')||'null');if(s)Object.keys(s).forEach(i=>{if($(i))$(i).value=s[i];});}catch(e){}}
 loadExtra(); calcTerm();
+let inv=[];
+function invRowHtml(i,d){return `<div class="inv" data-i="${i}"><div class="hd"><b>物件 ${i+1}</b><button data-del="${i}">削除</button></div>
+<div class="g">
+<div style="grid-column:1/3"><label>名称・メモ（任意）</label><input class="name" data-k="name" data-i="${i}" value="${d.name||''}" placeholder="例：新宿区ワンルーム"></div>
+<div><label>物件価格（借入額）万円</label><input type="number" inputmode="decimal" data-k="price" data-i="${i}" value="${d.price||''}" placeholder="2500" step="100"></div>
+<div><label>金利 %</label><input type="number" inputmode="decimal" data-k="rate" data-i="${i}" value="${d.rate??2.0}" step="0.1"></div>
+<div><label>借入期間 年</label><input type="number" inputmode="numeric" data-k="years" data-i="${i}" value="${d.years||35}"></div>
+<div><label>購入年（西暦・任意）</label><input type="number" inputmode="numeric" data-k="buy" data-i="${i}" value="${d.buy||''}" placeholder="2021"></div>
+<div><label>年間返済額 万円 <span style="color:var(--navy)">${d.manual?'（入力値）':'（自動推定・書き換え可）'}</span></label><input type="number" inputmode="decimal" data-k="known" data-i="${i}" value="${d.known||''}" placeholder="推定" style="${d.manual?'border-color:var(--navy);background:#EEF4FB':''}"></div>
+<div style="align-self:end"><button data-reset="${i}" style="border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 8px;font-size:12px;font-family:inherit;color:var(--mute)">推定に戻す</button></div>
+</div><div class="out"><span id="invo${i}">—</span></div></div>`;}
+function renderInv(){$('invRows').innerHTML=inv.map((d,i)=>invRowHtml(i,d)).join('');
+  document.querySelectorAll('#invRows input').forEach(el=>el.addEventListener('input',e=>{const i=+e.target.dataset.i,k=e.target.dataset.k;inv[i][k]=e.target.value;if(k==='known'){inv[i].manual=!!e.target.value;}calcInv();saveInv();}));
+  document.querySelectorAll('#invRows [data-reset]').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.reset;inv[i].manual=false;inv[i].known='';renderInv();saveInv();}));
+  document.querySelectorAll('#invRows [data-del]').forEach(b=>b.addEventListener('click',()=>{inv.splice(+b.dataset.del,1);renderInv();calcInv();saveInv();}));
+  calcInv();}
+function calcInv(){let tot=0; const exec=$('execDate').value?new Date($('execDate').value):new Date(); const strict=$('invStrict').checked; const ar=(parseFloat($('rate').value)||0)/100;
+  inv.forEach((d,i)=>{const P=(parseFloat(d.price)||0)*10000,r=(parseFloat(d.rate)||0)/100,n=Math.max(1,Math.round((parseFloat(d.years)||35)*12));let y=0,txt='—',extra='';
+    let elapsed=0; if(d.buy){elapsed=Math.max(0,Math.min(n-1,(exec.getFullYear()-parseInt(d.buy))*12+exec.getMonth()-6));}
+    const rem=n-elapsed;
+    if(P){const m=pmt(r,n,P); const bal=elapsed?P*Math.pow(1+r/12,elapsed)-m*(Math.pow(1+r/12,elapsed)-1)/(r/12||1e-9):P;
+      if(d.manual&&d.known){y=parseFloat(d.known)*10000;txt=`年間 ${fmt(Math.round(y/10000))}万円（入力値・推定は月${fmt(m)}円／年${fmt(Math.round(m*12/10000))}万円）`;}
+      else{y=m*12;txt=`推定 月 ${fmt(m)}円 ／ 年 ${fmt(Math.round(y/10000))}万円`;const kf=document.querySelector(`input[data-k=known][data-i="${i}"]`);if(kf&&document.activeElement!==kf){kf.value=Math.round(y/10000);d.known=kf.value;}}
+      if(d.buy){extra=`残債 約${fmt(Math.round(bal/10000))}万円・残${Math.floor(rem/12)}年${rem%12?rem%12+'ヶ月':''}`;
+        if(strict){const ms=pmt(ar,rem,bal); y=ms*12; txt=`審査金利${$('rate').value}%・残期間で再計算：月 ${fmt(ms)}円 ／ 年 ${fmt(Math.round(y/10000))}万円`;}}
+      else if(strict){const ms=pmt(ar,n,P); y=ms*12; txt=`審査金利${$('rate').value}%で再計算：月 ${fmt(ms)}円 ／ 年 ${fmt(Math.round(y/10000))}万円`;}
+    }else if(d.known){y=parseFloat(d.known)*10000;txt=`年間 ${fmt(Math.round(y/10000))}万円（入力値）`;}
+    const o=$('invo'+i); if(o)o.innerHTML=`<b>${txt}</b>`+(extra?`<span>${extra}</span>`:''); tot+=y;});
+  $('invTotal').textContent=fmt(Math.round(tot/10000))+'万円'; return Math.round(tot/10000);}
+$('addInv').addEventListener('click',()=>{inv.push({rate:2.0,years:35});renderInv();saveInv();});
+$('applyInv').addEventListener('click',()=>{$('other').value=calcInv();calc();});
+$('invStrict').addEventListener('change',calcInv); $('execDate').addEventListener('input',calcInv); $('rate').addEventListener('input',calcInv);
+function saveInv(){try{localStorage.setItem('loancalc3',JSON.stringify(inv));}catch(e){}}
+function loadInv(){try{const s=JSON.parse(localStorage.getItem('loancalc3')||'null');if(Array.isArray(s))inv=s;}catch(e){}}
+loadInv(); renderInv();
 </script>
 </body>
 </html>
