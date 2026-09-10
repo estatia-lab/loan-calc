@@ -116,7 +116,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
 <section class="card">
   <div class="row" id="rowIncome">
     <label>年収（税込・前年）<span>本人の源泉徴収票の金額</span></label>
-    <div class="field"><input type="number" inputmode="decimal" id="income" value="" placeholder="1600" step="50"><span class="unit">万円</span></div>
+    <div class="field"><input type="number" inputmode="decimal" id="income" value="" placeholder="0" step="50"><span class="unit">万円</span></div>
   </div>
   <div class="row">
     <label>収入合算する年収<span>配偶者等。なければ0</span></label>
@@ -215,8 +215,8 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
   <div class="row">
     <label>返済期間</label>
     <div class="field">
-      <input type="number" inputmode="numeric" id="years" value="49" min="1" max="50" class="small"><span class="unit">年</span>
-      <input type="number" inputmode="numeric" id="months" value="5" min="0" max="11" class="small" style="width:52px"><span class="unit">ヶ月</span>
+      <input type="number" inputmode="numeric" id="years" value="50" min="1" max="50" class="small"><span class="unit">年</span>
+      <input type="number" inputmode="numeric" id="months" value="0" min="0" max="11" class="small" style="width:52px"><span class="unit">ヶ月</span>
     </div>
   </div>
   <div class="row">
@@ -300,6 +300,7 @@ function custCalc(v,n,capLoan){
 ids.forEach(i=>$(i).addEventListener('input',calc)); ['showLoan','mgmt','ruleSel'].forEach(i=>$(i).addEventListener('input',calc));$('ruleSel').addEventListener('change',calc);
 document.querySelectorAll('.mode button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;document.querySelectorAll('.mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));$('rowLoan').style.display=mode==='need'?'':'none';calc();}));
 document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{$('rate').value=b.dataset.rate;$('ratio').value=b.dataset.ratio;document.querySelectorAll('#presets button').forEach(x=>x.setAttribute('aria-pressed',x===b));calc();}));
+try{if(localStorage.getItem('loancalc_ver')!=='v6'){['loancalc','loancalc2','loancalc3'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('loancalc_ver','v6');}}catch(e){}
 load(); calc();
 function monthsBetween(a,b){return (b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth())-(b.getDate()<a.getDate()?1:0);}
 function calcTerm(){
@@ -360,7 +361,7 @@ $('invStrict').addEventListener('change',calcInv); $('execDate').addEventListene
 function saveInv(){try{localStorage.setItem('loancalc3',JSON.stringify(inv));}catch(e){}}
 function loadInv(){try{const s=JSON.parse(localStorage.getItem('loancalc3')||'null');if(Array.isArray(s))inv=s;}catch(e){}}
 loadInv(); renderInv();
-(function(){const ed=$('execDate'); if(!ed.value){const d=new Date(); d.setMonth(d.getMonth()+2); ed.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';}})();
+(function(){const ed=$('execDate'); if(!ed.value){const d=new Date(); d.setMonth(d.getMonth()+2); ed.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}})();
 calcTerm(); calc();
 
 </script>
