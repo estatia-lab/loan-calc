@@ -87,7 +87,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
   </div>
   <div class="row">
     <label>管理費・修繕積立金（任意）<span>月額。入れると合計も表示</span></label>
-    <div class="field"><input type="number" inputmode="decimal" id="mgmt" value="" placeholder="0"><span class="unit">円</span></div>
+    <div class="field"><input type="number" inputmode="decimal" id="mgmt" value="" step="0.1"><span class="unit">万円</span></div>
   </div>
   <div class="row">
     <label>5年・125%ルール<span>銀行によって「あり」「なし」が分かれます</span></label>
@@ -107,7 +107,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
 </div>
 
 <div class="presets" id="presets">
-  <button data-rate="4.0" data-ratio="35">auじぶん（4.0%・35%）</button>
+  <button data-rate="4.0" data-ratio="35" aria-pressed="true">auじぶん（4.0%・35%）</button>
   <button data-rate="3.5" data-ratio="35">3.5%・35%</button>
   <button data-rate="4.0" data-ratio="40">4.0%・40%</button>
   <button data-rate="3.0" data-ratio="35">3.0%・35%</button>
@@ -116,11 +116,11 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
 <section class="card">
   <div class="row" id="rowIncome">
     <label>年収（税込・前年）<span>本人の源泉徴収票の金額</span></label>
-    <div class="field"><input type="number" inputmode="decimal" id="income" value="1600" step="50"><span class="unit">万円</span></div>
+    <div class="field"><input type="number" inputmode="decimal" id="income" value="" placeholder="1600" step="50"><span class="unit">万円</span></div>
   </div>
   <div class="row">
     <label>収入合算する年収<span>配偶者等。なければ0</span></label>
-    <div class="field"><input type="number" inputmode="decimal" id="income2" value="0" step="50"><span class="unit">万円</span></div>
+    <div class="field"><input type="number" inputmode="decimal" id="income2" value="" placeholder="0" step="50"><span class="unit">万円</span></div>
   </div>
   <div class="row" id="rowLoan" style="display:none">
     <label>希望借入額<span>物件価格＋諸費用</span></label>
@@ -160,7 +160,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
 <section class="card">
   <div class="row">
     <label>生年月日<span>入力すると年齢と借入年数を自動計算</span></label>
-    <div class="field"><input type="date" id="dob" value="1996-07-08" style="width:150px;font-size:15px"></div>
+    <div class="field"><input type="date" id="dob" value="" style="width:150px;font-size:15px"></div>
   </div>
   <div class="row">
     <label>現在の年齢<span>生年月日が不明なときはこちら</span></label>
@@ -168,7 +168,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
   </div>
   <div class="row">
     <label>融資実行（引渡）予定日</label>
-    <div class="field"><input type="date" id="execDate" value="2026-11-01" style="width:150px;font-size:15px"></div>
+    <div class="field"><input type="date" id="execDate" value="" style="width:150px;font-size:15px"></div>
   </div>
   <div class="row">
     <label>完済時の年齢上限<span>銀行の要件。多くは80歳</span></label>
@@ -221,7 +221,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
   </div>
   <div class="row">
     <label>実行金利（参考）<span>実際の月々返済の計算用</span></label>
-    <div class="field"><input type="number" inputmode="decimal" id="realRate" value="1.09" step="0.01" class="small"><span class="unit">%</span></div>
+    <div class="field"><input type="number" inputmode="decimal" id="realRate" value="1.15" step="0.01" class="small"><span class="unit">%</span></div>
   </div>
 </section>
 
@@ -282,7 +282,7 @@ function calc(){
   $('grid').innerHTML=html; custCalc(v,n,capLoanForCust); save();
 }
 function custCalc(v,n,capLoan){
-  const L=(parseFloat($('showLoan').value)||0)*10000||capLoan; const rr=v.realRate/100; const mg=parseFloat($('mgmt').value)||0;
+  const L=(parseFloat($('showLoan').value)||0)*10000||capLoan; const rr=v.realRate/100; const mg=(parseFloat($('mgmt').value)||0)*10000;
   if(!L||!n){$('custPay').textContent='—';return;}
   const m=pmt(rr,n,L);
   $('custHead').textContent=`変動金利 年${v.realRate.toFixed(2)}%・借入 ${man(L)}万円・${v.years}年${v.months?v.months+'ヶ月':''}の場合`;
@@ -360,6 +360,9 @@ $('invStrict').addEventListener('change',calcInv); $('execDate').addEventListene
 function saveInv(){try{localStorage.setItem('loancalc3',JSON.stringify(inv));}catch(e){}}
 function loadInv(){try{const s=JSON.parse(localStorage.getItem('loancalc3')||'null');if(Array.isArray(s))inv=s;}catch(e){}}
 loadInv(); renderInv();
+(function(){const ed=$('execDate'); if(!ed.value){const d=new Date(); d.setMonth(d.getMonth()+2); ed.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';}})();
+calcTerm(); calc();
+
 </script>
 </body>
 </html>
