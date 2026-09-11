@@ -64,9 +64,10 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
 </head>
 <body>
 <main>
-<header>
-  <h1>借入可能額 早見計算</h1>
-  <p>年齢から借入年数を、年収から借入上限を逆算します</p>
+<header style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+  <div><h1>借入可能額 早見計算</h1>
+  <p>年齢から借入年数を、年収から借入上限を逆算します</p></div>
+  <button id="resetAll" style="flex:none;border:1px solid var(--line);background:#fff;color:var(--mute);border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;margin-top:2px">リセット</button>
 </header>
 
 <div class="result" role="status" aria-live="polite">
@@ -244,7 +245,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
 <script>
 const $=id=>document.getElementById(id);
 const ids=['income','income2','loan','other','rate','ratio','years','months','realRate'];
-let mode='cap';
+let mode='cap'; let userIncome='';
 const fmt=n=>Math.round(n).toLocaleString('ja-JP');
 const man=n=>fmt(n/10000);
 function annuity(r,n){const m=r/12;return m===0?n:(1-Math.pow(1+m,-n))/m;}
@@ -282,7 +283,7 @@ function calc(){
   const terms=[[35,0],[40,0],[45,0],[v.years,v.months]];
   const seen=new Set(); const cols=terms.filter(t=>{const k=t[0]+'-'+t[1];if(seen.has(k))return false;seen.add(k);return true;});
   let html='<tr><th>年収</th>'+cols.map(t=>`<th>${t[0]}年${t[1]?t[1]+'ヶ月':''}</th>`).join('')+'</tr>';
-  const base=Math.round(incomeAll/10000/100)*100||1000; const rows=[]; for(let y=Math.max(300,base-600);y<=base+600;y+=200)rows.push(y);
+  const base=Math.round(incomeAll/10000/100)*100||1000; const rows=[]; for(let y=Math.max(100,base-500);y<=base+500;y+=100)rows.push(y);
   const hit=Math.round(incomeAll/10000);
   rows.forEach(y=>{const cap=Math.max(0,y*10000*ratio-other)/12;const isHit=Math.abs(y-hit)<100;html+=`<tr class="${isHit?'hit':''}"><td>${fmt(y)}</td>`+cols.map(t=>{const nn=t[0]*12+t[1];return `<td>${man(cap*annuity(r,nn))}</td>`;}).join('')+'</tr>';});
   $('grid').innerHTML=html; custCalc(v,n,capLoanForCust); save();
@@ -313,13 +314,12 @@ function custCalc(v,n,capLoan){
 ids.forEach(i=>$(i).addEventListener('input',calc)); ['showLoan','mgmt','ruleSel'].forEach(i=>$(i).addEventListener('input',calc));$('ruleSel').addEventListener('change',calc);
 document.querySelectorAll('.mode button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;document.querySelectorAll('.mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));
   $('rowLoan').style.display=mode==='need'?'block':'none';
-  ['income','income2','loan','other','showLoan'].forEach(i=>$(i).value='');
   const inc=$('income'), lab=document.querySelector('#rowIncome label');
-  if(mode==='need'){inc.readOnly=true;inc.style.background='#EEF4FB';inc.style.color='var(--navy)';lab.innerHTML='必要年収（自動計算）<span>希望借入額から逆算した年収</span>';}
-  else{inc.readOnly=false;inc.style.background='';inc.style.color='';lab.innerHTML='年収（税込・前年）<span>本人の源泉徴収票の金額</span>';}
+  if(mode==='need'){userIncome=inc.value;inc.readOnly=true;inc.style.background='#EEF4FB';inc.style.color='var(--navy)';lab.innerHTML='必要年収（自動計算）<span>希望借入額から逆算した年収</span>';}
+  else{inc.readOnly=false;inc.style.background='';inc.style.color='';lab.innerHTML='年収（税込・前年）<span>本人の源泉徴収票の金額</span>';inc.value=userIncome;}
   calc();}));
 document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{$('rate').value=b.dataset.rate;$('ratio').value=b.dataset.ratio;document.querySelectorAll('#presets button').forEach(x=>x.setAttribute('aria-pressed',x===b));calc();}));
-try{if(localStorage.getItem('loancalc_ver')!=='v13'){['loancalc','loancalc2','loancalc3'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('loancalc_ver','v13');}}catch(e){}
+try{if(localStorage.getItem('loancalc_ver')!=='v15'){['loancalc','loancalc2','loancalc3'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('loancalc_ver','v15');}}catch(e){}
 load(); calc();
 function monthsBetween(a,b){return (b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth())-(b.getDate()<a.getDate()?1:0);}
 function calcTerm(){
@@ -384,7 +384,7 @@ function loadInv(){try{const s=JSON.parse(localStorage.getItem('loancalc3')||'nu
 loadInv(); renderInv();
 (function(){const ed=$('execDate'); if(!ed.value){const d=new Date(); d.setMonth(d.getMonth()+2); ed.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}})();
 autoTerm();
-
+$('resetAll').addEventListener('click',()=>{if(!confirm('入力内容をすべて消去しますか？'))return;try{['loancalc','loancalc2','loancalc3'].forEach(k=>localStorage.removeItem(k));}catch(e){}document.querySelectorAll('input').forEach(i=>{if(i.type!=='checkbox')i.value='';});location.replace(location.pathname+'?r='+Date.now());});
 </script>
 </body>
 </html>
