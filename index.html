@@ -111,7 +111,9 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
 </div>
 
 <div class="presets" id="presets">
-  <button data-rate="4.0" data-ratio="35" aria-pressed="true">auじぶん（4.0%・35%）</button>
+  <button data-rate="4.0" data-ratio="35" data-age="80" data-limit="birthday" data-max="50" data-unit="month" data-rule="yes" data-real="1.164" aria-pressed="true">auじぶん（4.0%・35%）</button>
+  <button data-rate="4.0" data-ratio="35" data-age="80" data-limit="under" data-max="50" data-unit="year" data-rule="none" data-real="1.09">SBI新生（4.0%・35%・80歳未満）</button>
+  <button data-rate="3.5" data-ratio="35" data-age="85" data-limit="under" data-max="50" data-unit="year" data-rule="yes" data-real="1.18">UI銀行（3.5%・35%推定・84歳以下）</button>
   <button data-rate="3.5" data-ratio="35">3.5%・35%</button>
   <button data-rate="4.0" data-ratio="40">4.0%・40%</button>
   <button data-rate="3.0" data-ratio="35">3.0%・35%</button>
@@ -239,7 +241,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
 
 <div id="formula" style="display:none"></div>
 
-<p class="note">投資用物件のローンは、家賃収入の有無にかかわらず年間返済額がそのまま返済負担率に算入されるのが一般的です。家賃を収入に加算する銀行、収支が黒字なら算入しない銀行、逆に他ローンも審査金利で再計算する銀行があり、扱いは非開示です。購入年を入れると残債・残期間の目安が出ます（残債は元利均等・金利一定で概算）。借入期間の上限は「完済時年齢の要件」と「銀行の最長期間」の短い方です。「未満」は誕生日の前月まで、「誕生日まで」は誕生日の月までを上限とします（銀行により実務上2〜3ヶ月の余裕を取る場合があります）。審査金利・負担率は銀行ごとに異なり非開示です。年収は前年の税込年収、期間は完済時年齢の要件（多くは80歳未満）で上限が決まります。結果は目安であり、実際の承認額は各行の審査によります。</p>
+<p class="note">投資用物件のローンは、家賃収入の有無にかかわらず年間返済額がそのまま返済負担率に算入されるのが一般的です。家賃を収入に加算する銀行、収支が黒字なら算入しない銀行、逆に他ローンも審査金利で再計算する銀行があり、扱いは非開示です。購入年を入れると残債・残期間の目安が出ます（残債は元利均等・金利一定で概算）。借入期間の上限は「完済時年齢の要件」と「銀行の最長期間」の短い方です。「未満」は誕生日の前月まで、「誕生日まで」は誕生日の月までを上限とします（銀行により実務上2〜3ヶ月の余裕を取る場合があります）。審査金利・負担率は銀行ごとに異なり非開示です。UI銀行の「3.5%・35%」は仮審査承認（年収1,600万円単独で13,030万円・50年、2026/9）からの逆算による推定値で、公表値ではありません。銀行プリセットは完済時年齢・最長期間・期間の刻み・5年125%ルール・実行金利もまとめて切り替えます。年収は前年の税込年収、期間は完済時年齢の要件（多くは80歳未満）で上限が決まります。結果は目安であり、実際の承認額は各行の審査によります。</p>
 </main>
 
 <script>
@@ -251,8 +253,8 @@ const man=n=>fmt(n/10000);
 function annuity(r,n){const m=r/12;return m===0?n:(1-Math.pow(1+m,-n))/m;}
 function pmt(r,n,pv){const m=r/12;return m===0?pv/n:pv*m/(1-Math.pow(1+m,-n));}
 function read(){const o={};ids.forEach(i=>o[i]=parseFloat($(i).value)||0);return o;}
-function save(){try{localStorage.setItem('loancalc',JSON.stringify(read()));}catch(e){}}
-function load(){try{const s=JSON.parse(localStorage.getItem('loancalc')||'null');if(s)ids.forEach(i=>{if(s[i]!==undefined)$(i).value=s[i];});}catch(e){}}
+function save(){}
+function load(){}
 function calc(){
   let capLoanForCust=0;
   const v=read(); const n=Math.max(1,Math.round(v.years*12+v.months)); const r=v.rate/100; const ratio=v.ratio/100;
@@ -318,8 +320,11 @@ document.querySelectorAll('.mode button').forEach(b=>b.addEventListener('click',
   if(mode==='need'){userIncome=inc.value;inc.readOnly=true;inc.style.background='#EEF4FB';inc.style.color='var(--navy)';lab.innerHTML='必要年収（自動計算）<span>希望借入額から逆算した年収</span>';}
   else{inc.readOnly=false;inc.style.background='';inc.style.color='';lab.innerHTML='年収（税込・前年）<span>本人の源泉徴収票の金額</span>';inc.value=userIncome;}
   calc();}));
-document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{$('rate').value=b.dataset.rate;$('ratio').value=b.dataset.ratio;document.querySelectorAll('#presets button').forEach(x=>x.setAttribute('aria-pressed',x===b));calc();}));
-try{if(localStorage.getItem('loancalc_ver')!=='v15'){['loancalc','loancalc2','loancalc3'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('loancalc_ver','v15');}}catch(e){}
+document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{const d=b.dataset;$('rate').value=d.rate;$('ratio').value=d.ratio;
+  if(d.age){$('ageLimit').value=d.age;$('limitType').value=d.limit;$('maxTerm').value=d.max;$('termUnit').value=d.unit;$('ruleSel').value=d.rule;if(d.real&&$('realRate'))$('realRate').value=d.real;saveExtra();}
+  document.querySelectorAll('#presets button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  if(d.age&&typeof autoTerm==='function'){autoTerm();}else{calc();}}));
+try{['loancalc','loancalc2','loancalc3','loancalc_ver'].forEach(k=>localStorage.removeItem(k));}catch(e){} // 保存なし：ページを開くたびに初期状態
 load(); calc();
 function monthsBetween(a,b){return (b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth())-(b.getDate()<a.getDate()?1:0);}
 function calcTerm(){
@@ -344,8 +349,8 @@ function calcTerm(){
 ['dob','age','execDate','ageLimit','limitType','maxTerm','termUnit'].forEach(i=>{$(i).addEventListener('input',()=>{autoTerm();saveExtra();});$(i).addEventListener('change',()=>{autoTerm();saveExtra();});});
 function autoTerm(){const mo=calcTerm(); if(mo){$('years').value=Math.floor(mo/12);$('months').value=mo%12;} calc();}
 
-function saveExtra(){try{const o={};['dob','age','execDate','ageLimit','limitType','maxTerm','termUnit'].forEach(i=>o[i]=$(i).value);localStorage.setItem('loancalc2',JSON.stringify(o));}catch(e){}}
-function loadExtra(){try{const s=JSON.parse(localStorage.getItem('loancalc2')||'null');if(s)Object.keys(s).forEach(i=>{if($(i))$(i).value=s[i];});}catch(e){}}
+function saveExtra(){}
+function loadExtra(){}
 loadExtra(); calcTerm();
 let inv=[];
 function invRowHtml(i,d){return `<div class="inv" data-i="${i}"><div class="hd"><b>物件 ${i+1}</b><button data-del="${i}">削除</button></div>
@@ -379,8 +384,8 @@ function calcInv(){let tot=0; const exec=$('execDate').value?new Date($('execDat
 $('addInv').addEventListener('click',()=>{inv.push({rate:2.0,years:35});renderInv();saveInv();});
 $('applyInv').addEventListener('click',()=>{$('other').value=calcInv();calc();});
 $('invStrict').addEventListener('change',calcInv); $('execDate').addEventListener('input',calcInv); $('rate').addEventListener('input',calcInv);
-function saveInv(){try{localStorage.setItem('loancalc3',JSON.stringify(inv));}catch(e){}}
-function loadInv(){try{const s=JSON.parse(localStorage.getItem('loancalc3')||'null');if(Array.isArray(s))inv=s;}catch(e){}}
+function saveInv(){}
+function loadInv(){}
 loadInv(); renderInv();
 (function(){const ed=$('execDate'); if(!ed.value){const d=new Date(); d.setMonth(d.getMonth()+2); ed.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}})();
 autoTerm();
