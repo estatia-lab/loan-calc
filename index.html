@@ -171,7 +171,7 @@ h2{font-size:13.5px;font-weight:600;margin:16px 0 8px;color:var(--navy)}
     <div class="field"><input type="date" id="dob" value="" style="width:150px;font-size:15px"></div>
   </div>
   <div class="row">
-    <label>現在の年齢<span>生年月日が不明なときはこちら</span></label>
+    <label>現在の年齢<span>生年月日が不明なときはこちら（入力すると生年月日は消えます）</span></label>
     <div class="field"><input type="number" inputmode="numeric" id="age" value="" placeholder="" class="small"><span class="unit">歳</span></div>
   </div>
   <div class="row">
@@ -336,7 +336,7 @@ function calcTerm(){
     const limitDate=new Date(dob.getFullYear()+lim,dob.getMonth(),dob.getDate());
     months=monthsBetween(exec,limitDate); if(under) months-=1;
     note=`実行時${ageAtExec}歳・${lim}歳の誕生日 ${limitDate.getFullYear()}/${limitDate.getMonth()+1}/${limitDate.getDate()}`;
-    const today=new Date(); $('age').placeholder=String(Math.floor(monthsBetween(dob,today)/12)); $('age').value='';
+    const today=new Date(); $('age').placeholder=String(Math.floor(monthsBetween(dob,today)/12));
   }else if($('age').value){
     ageAtExec=parseInt($('age').value); months=(lim-ageAtExec)*12; if(under) months-=12; note=`実行時${ageAtExec}歳（誕生日不明のため年単位で概算）`;
   }
@@ -347,6 +347,8 @@ function calcTerm(){
   return months;
 }
 ['dob','age','execDate','ageLimit','limitType','maxTerm','termUnit'].forEach(i=>{$(i).addEventListener('input',()=>{autoTerm();saveExtra();});$(i).addEventListener('change',()=>{autoTerm();saveExtra();});});
+$('age').addEventListener('input',()=>{if($('age').value){$('dob').value='';autoTerm();saveExtra();}});
+$('dob').addEventListener('input',()=>{if($('dob').value){$('age').value='';autoTerm();saveExtra();}});
 function autoTerm(){const mo=calcTerm(); if(mo){$('years').value=Math.floor(mo/12);$('months').value=mo%12;} calc();}
 
 function saveExtra(){}
